@@ -1,0 +1,54 @@
+flierresponse <- read.csv("FlierResponse.csv",header = T,sep = ",")
+flierresponse
+str(flierresponse)
+flierresponse$Response <- as.factor(flierresponse$Response)
+str(flierresponse)
+summary(flierresponse)
+
+framingham = read.csv("framingham.csv")
+str(framingham)
+framingham$education = factor(framingham$education)
+str(framingham)
+
+library(caTools)
+install.packages("car")
+library(car)
+
+set.seed(1000)
+split = sample.split(framingham$TenYearCHD, SplitRatio = 0.70)
+
+train = subset(framingham, split=TRUE)
+test = subset(framingham, split=FALSE)
+
+framinghamLog = glm(TenYearCHD ~ ., data = train, family=binomial)
+summary(framinghamLog)
+car::vif(framinghamLog)
+
+predictTrain = predict(framinghamLog, type = "response", newdata = train)
+predictTrain
+table(train$TenYearCHD, predictTrain >0.5)
+#accuracy
+(2170.30)/(2170+30+357.9)
+(2170)/(2170+357)
+(2170)/(2170+9)
+(30)/(30+357)
+
+predictTest = predict(framinghamLog, type = "response", newdata = test)
+
+table(test$TenYearCHD, predictTest >0.5)
+
+#accuracy on test set
+(915+12)/(915+12+158+7)
+
+
+table(test$TenYearCHD, predictTest >0.9)
+table(test$TenYearCHD, predictTest >0.7)
+table(test$TenYearCHD, predictTest >0.5)
+table(test$TenYearCHD, predictTest >0.3)
+table(test$TenYearCHD, predictTest >0.1)
+
+library(ROCR) 
+install.packages("ggplot2")
+library(ggplot2)
+ROCRpred = prediction(predictTest, test$TenYearCHD)
+as.numeric(performance(ROCRpred, "auc")@y.values)
